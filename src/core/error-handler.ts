@@ -1,4 +1,4 @@
-import { ErrorInfo, ErrorType, SDKError } from '../types';
+import { ErrorInfo, ErrorType } from '../types';
 import { Logger } from '../utils/logger';
 import { getErrorBasicInfo, getStackTrace } from '../utils/helpers';
 
@@ -68,7 +68,8 @@ export class ErrorHandler {
   handleResourceError(event: Event): void {
     const target = event.target as HTMLElement;
     const tagName = target.tagName.toLowerCase();
-    const src = (target as any).src || (target as any).href;
+    const src = (target as HTMLElement & { src?: string; href?: string }).src || 
+                (target as HTMLElement & { src?: string; href?: string }).href;
 
     const errorInfo: ErrorInfo = {
       message: `Resource loading failed: ${tagName}`,
@@ -87,7 +88,7 @@ export class ErrorHandler {
   /**
    * 处理自定义错误
    */
-  handleCustomError(error: Error | string, extra?: Record<string, any>): void {
+  handleCustomError(error: Error | string, extra?: Record<string, unknown>): void {
     const errorInfo: ErrorInfo = {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? getStackTrace(error) : undefined,

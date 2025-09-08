@@ -49,7 +49,7 @@ module.exports = [
     output: {
       file: 'dist/index.umd.js',
       format: 'umd',
-      name: 'LeoErrorMonitor',
+      name: 'LeoWebMonitor',
       sourcemap: true
     },
     plugins: [

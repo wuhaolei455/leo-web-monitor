@@ -26,41 +26,41 @@ export class Logger {
   /**
    * 记录调试日志
    */
-  debug(message: string, data?: any): void {
+  debug(message: string, data?: unknown): void {
     this.log(LogLevel.DEBUG, message, data);
   }
 
   /**
    * 记录信息日志
    */
-  info(message: string, data?: any): void {
+  info(message: string, data?: unknown): void {
     this.log(LogLevel.INFO, message, data);
   }
 
   /**
    * 记录警告日志
    */
-  warn(message: string, data?: any): void {
+  warn(message: string, data?: unknown): void {
     this.log(LogLevel.WARN, message, data);
   }
 
   /**
    * 记录错误日志
    */
-  error(message: string, data?: any): void {
+  error(message: string, data?: unknown): void {
     this.log(LogLevel.ERROR, message, data);
   }
 
   /**
    * 记录日志
    */
-  private log(level: LogLevel, message: string, data?: any): void {
+  private log(level: LogLevel, message: string, data?: unknown): void {
     if (!this.shouldLog(level)) {
       return;
     }
 
     const timestamp = new Date().toISOString();
-    const logMessage = `[${timestamp}] [LeoErrorMonitor] [${level.toUpperCase()}] ${message}`;
+    const logMessage = `[${timestamp}] [LeoWebMonitor] [${level.toUpperCase()}] ${message}`;
 
     switch (level) {
       case LogLevel.DEBUG:

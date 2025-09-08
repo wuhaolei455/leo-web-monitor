@@ -5,13 +5,13 @@
 /**
  * 防抖函数
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
   let timer: NodeJS.Timeout | null = null;
   
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: unknown, ...args: Parameters<T>) {
     if (timer) {
       clearTimeout(timer);
     }
@@ -22,13 +22,13 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * 节流函数
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
   let lastCall = 0;
   
-  return function (this: any, ...args: Parameters<T>) {
+  return function (this: unknown, ...args: Parameters<T>) {
     const now = Date.now();
     if (now - lastCall >= delay) {
       lastCall = now;
@@ -47,7 +47,7 @@ export function generateId(): string {
 /**
  * 安全的JSON序列化
  */
-export function safeStringify(obj: any, space?: number): string {
+export function safeStringify(obj: unknown, space?: number): string {
   const seen = new WeakSet();
   
   try {
@@ -89,7 +89,7 @@ export function now(): number {
 /**
  * 深度合并对象
  */
-export function deepMerge<T extends Record<string, any>>(
+export function deepMerge<T>(
   target: T,
   ...sources: Partial<T>[]
 ): T {
@@ -100,7 +100,7 @@ export function deepMerge<T extends Record<string, any>>(
     for (const key in source) {
       if (isObject(source[key])) {
         if (!target[key]) Object.assign(target, { [key]: {} });
-        deepMerge(target[key] as any, source[key] as any);
+        deepMerge(target[key] as Record<string, unknown>, source[key] as Record<string, unknown>);
       } else {
         Object.assign(target, { [key]: source[key] });
       }
@@ -113,8 +113,8 @@ export function deepMerge<T extends Record<string, any>>(
 /**
  * 判断是否为对象
  */
-function isObject(item: any): item is Record<string, any> {
-  return item && typeof item === 'object' && !Array.isArray(item);
+function isObject(item: unknown): item is Record<string, unknown> {
+  return Boolean(item && typeof item === 'object' && !Array.isArray(item));
 }
 
 /**

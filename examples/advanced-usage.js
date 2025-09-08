@@ -4,10 +4,10 @@
  * 这个示例展示了如何在实际项目中使用错误监控SDK
  */
 
-import { LeoErrorMonitor, ErrorType } from '../dist/index.esm.js';
+import { LeoWebMonitor, ErrorType } from '../dist/index.esm.js';
 
 // 1. 高级配置初始化
-const monitor = new LeoErrorMonitor({
+const monitor = new LeoWebMonitor({
     apiKey: 'your-api-key-here',
     endpoint: 'https://your-api-endpoint.com/errors',
     timeout: 10000,

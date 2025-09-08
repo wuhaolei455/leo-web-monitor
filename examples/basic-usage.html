@@ -56,12 +56,12 @@
     </style>
 </head>
 <body>
-    <h1>Leo Error Monitor - 基础使用示例</h1>
+    <h1>Leo Web Monitor - 基础使用示例</h1>
     
     <div class="demo-section">
         <h3>1. 基础初始化</h3>
         <p>SDK已自动初始化并开始监控错误</p>
-        <pre><code>const monitor = new LeoErrorMonitor({
+        <pre><code>const monitor = new LeoWebMonitor({
   debug: true,
   autoCapture: true,
   maxErrorQueueSize: 50
@@ -93,7 +93,7 @@
     
     <script>
         // 初始化监控器
-        const monitor = new LeoErrorMonitor.default({
+        const monitor = new LeoWebMonitor.default({
             debug: true,
             autoCapture: true,
             maxErrorQueueSize: 50,

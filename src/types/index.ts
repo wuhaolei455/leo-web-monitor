@@ -1,7 +1,7 @@
 /**
  * SDK配置选项
  */
-export interface LeoErrorMonitorConfig {
+export interface LeoWebMonitorConfig {
   /** API密钥 */
   apiKey?: string;
   /** 服务端点URL */
@@ -49,7 +49,7 @@ export interface ErrorInfo {
   /** 错误列号 */
   colno?: number;
   /** 额外信息 */
-  extra?: Record<string, any>;
+  extra?: Record<string, unknown>;
 }
 
 /**
@@ -83,9 +83,9 @@ export enum LogLevel {
  */
 export class SDKError extends Error {
   public readonly code: string;
-  public readonly details?: any;
+  public readonly details?: unknown;
 
-  constructor(message: string, code: string, details?: any) {
+  constructor(message: string, code: string, details?: unknown) {
     super(message);
     this.name = 'SDKError';
     this.code = code;

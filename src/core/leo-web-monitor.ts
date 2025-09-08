@@ -1,4 +1,4 @@
-import { LeoErrorMonitorConfig, ErrorInfo, LogLevel, SDKError, ReportResponse } from '../types';
+import { LeoWebMonitorConfig, ErrorInfo, LogLevel, SDKError, ReportResponse } from '../types';
 import { Logger } from '../utils/logger';
 import { ErrorHandler } from './error-handler';
 import { Reporter } from './reporter';
@@ -7,8 +7,8 @@ import { deepMerge, isBrowser } from '../utils/helpers';
 /**
  * Leo错误监控SDK主类
  */
-export class LeoErrorMonitor {
-  private config: LeoErrorMonitorConfig & Required<Pick<LeoErrorMonitorConfig, 'timeout' | 'retryTimes' | 'debug' | 'autoCapture' | 'maxErrorQueueSize' | 'reportInterval'>>;
+export class LeoWebMonitor {
+  private config: Required<LeoWebMonitorConfig>;
   private logger: Logger;
   private errorHandler: ErrorHandler;
   private reporter?: Reporter;
@@ -19,7 +19,7 @@ export class LeoErrorMonitor {
   /**
    * 默认配置
    */
-  private static readonly DEFAULT_CONFIG: Required<LeoErrorMonitorConfig> = {
+  private static readonly DEFAULT_CONFIG: Required<LeoWebMonitorConfig> = {
     apiKey: '',
     endpoint: '',
     timeout: 5000,
@@ -29,13 +29,15 @@ export class LeoErrorMonitor {
     maxErrorQueueSize: 100,
     reportInterval: 2000,
     errorFilter: () => true,
-    onError: () => {}
+    onError: () => {
+      // Default empty error handler - can be overridden by user config
+    }
   };
 
-  constructor(config: LeoErrorMonitorConfig | string) {
+  constructor(config: LeoWebMonitorConfig | string) {
     // 支持直接传入apiKey字符串
     const configObj = typeof config === 'string' ? { apiKey: config } : config;
-    this.config = deepMerge({}, LeoErrorMonitor.DEFAULT_CONFIG, configObj) as typeof this.config;
+    this.config = deepMerge({}, LeoWebMonitor.DEFAULT_CONFIG, configObj) as Required<LeoWebMonitorConfig>;
 
     // 初始化日志器
     this.logger = new Logger(this.config.debug ? LogLevel.DEBUG : LogLevel.WARN);
@@ -60,7 +62,7 @@ export class LeoErrorMonitor {
       );
     }
 
-    this.logger.info('LeoErrorMonitor initialized', { config: this.config });
+    this.logger.info('LeoWebMonitor initialized', { config: this.config });
   }
 
   /**
@@ -68,12 +70,12 @@ export class LeoErrorMonitor {
    */
   start(): void {
     if (this.isInitialized) {
-      this.logger.warn('LeoErrorMonitor is already started');
+      this.logger.warn('LeoWebMonitor is already started');
       return;
     }
 
     if (!isBrowser()) {
-      this.logger.warn('LeoErrorMonitor only works in browser environment');
+      this.logger.warn('LeoWebMonitor only works in browser environment');
       return;
     }
 
@@ -82,7 +84,7 @@ export class LeoErrorMonitor {
     }
 
     this.isInitialized = true;
-    this.logger.info('LeoErrorMonitor started');
+    this.logger.info('LeoWebMonitor started');
   }
 
   /**
@@ -95,13 +97,13 @@ export class LeoErrorMonitor {
 
     this.removeGlobalErrorHandlers();
     this.isInitialized = false;
-    this.logger.info('LeoErrorMonitor stopped');
+    this.logger.info('LeoWebMonitor stopped');
   }
 
   /**
    * 手动报告错误
    */
-  captureError(error: Error | string, extra?: Record<string, any>): void {
+  captureError(error: Error | string, extra?: Record<string, unknown>): void {
     this.errorHandler.handleCustomError(error, extra);
     this.triggerReport();
   }
@@ -109,7 +111,7 @@ export class LeoErrorMonitor {
   /**
    * 手动报告消息
    */
-  captureMessage(message: string, extra?: Record<string, any>): void {
+  captureMessage(message: string, extra?: Record<string, unknown>): void {
     this.captureError(message, extra);
   }
 
@@ -156,8 +158,8 @@ export class LeoErrorMonitor {
   /**
    * 更新配置
    */
-  updateConfig(newConfig: Partial<LeoErrorMonitorConfig>): void {
-    this.config = deepMerge(this.config, newConfig) as typeof this.config;
+  updateConfig(newConfig: Partial<LeoWebMonitorConfig>): void {
+    this.config = deepMerge(this.config, newConfig) as Required<LeoWebMonitorConfig>;
     this.logger.setLevel(this.config.debug ? LogLevel.DEBUG : LogLevel.WARN);
     this.logger.info('Configuration updated', newConfig);
   }

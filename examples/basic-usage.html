@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leo Error Monitor - 基础使用示例</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .demo-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #errorLog {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+        }
+        .error-entry {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-left: 4px solid #dc3545;
+            border-radius: 2px;
+        }
+        .error-time {
+            color: #6c757d;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Leo Error Monitor - 基础使用示例</h1>
+    
+    <div class="demo-section">
+        <h3>1. 基础初始化</h3>
+        <p>SDK已自动初始化并开始监控错误</p>
+        <pre><code>const monitor = new LeoErrorMonitor({
+  debug: true,
+  autoCapture: true,
+  maxErrorQueueSize: 50
+});</code></pre>
+    </div>
+
+    <div class="demo-section">
+        <h3>2. 测试不同类型的错误</h3>
+        
+        <button onclick="triggerJSError()">触发 JavaScript 错误</button>
+        <button onclick="triggerPromiseError()">触发 Promise 错误</button>
+        <button onclick="triggerResourceError()">触发资源加载错误</button>
+        <button onclick="triggerCustomError()">触发自定义错误</button>
+        
+        <br><br>
+        
+        <button onclick="showErrorStats()">显示错误统计</button>
+        <button onclick="getErrorList()">获取错误列表</button>
+        <button onclick="clearErrors()">清空错误</button>
+    </div>
+
+    <div class="demo-section">
+        <h3>3. 错误日志</h3>
+        <div id="errorLog"></div>
+    </div>
+
+    <!-- 引入SDK -->
+    <script src="../dist/index.umd.js"></script>
+    
+    <script>
+        // 初始化监控器
+        const monitor = new LeoErrorMonitor.default({
+            debug: true,
+            autoCapture: true,
+            maxErrorQueueSize: 50,
+            onError: function(errorInfo) {
+                displayError(errorInfo);
+            }
+        });
+
+        // 启动监控
+        monitor.start();
+
+        // 错误显示函数
+        function displayError(errorInfo) {
+            const errorLog = document.getElementById('errorLog');
+            const errorEntry = document.createElement('div');
+            errorEntry.className = 'error-entry';
+            
+            const time = new Date(errorInfo.timestamp).toLocaleTimeString();
+            errorEntry.innerHTML = `
+                <div class="error-time">[${time}] ${errorInfo.type}</div>
+                <div><strong>消息:</strong> ${errorInfo.message}</div>
+                ${errorInfo.filename ? `<div><strong>文件:</strong> ${errorInfo.filename}:${errorInfo.lineno || 0}:${errorInfo.colno || 0}</div>` : ''}
+                ${errorInfo.stack ? `<div><strong>堆栈:</strong><br><pre style="margin: 5px 0; white-space: pre-wrap;">${errorInfo.stack}</pre></div>` : ''}
+            `;
+            
+            errorLog.insertBefore(errorEntry, errorLog.firstChild);
+            
+            // 限制显示的错误数量
+            while (errorLog.children.length > 20) {
+                errorLog.removeChild(errorLog.lastChild);
+            }
+        }
+
+        // 测试函数
+        function triggerJSError() {
+            // 故意触发一个引用错误
+            undefinedVariable.someMethod();
+        }
+
+        function triggerPromiseError() {
+            // 触发一个未处理的Promise拒绝
+            new Promise((resolve, reject) => {
+                reject(new Error('这是一个未处理的Promise错误'));
+            });
+        }
+
+        function triggerResourceError() {
+            // 尝试加载一个不存在的图片
+            const img = new Image();
+            img.src = 'https://example.com/non-existent-image.jpg';
+            document.body.appendChild(img);
+        }
+
+        function triggerCustomError() {
+            // 手动捕获一个自定义错误
+            monitor.captureError('这是一个手动捕获的自定义错误', {
+                userId: '12345',
+                action: 'button_click',
+                component: 'demo_page'
+            });
+        }
+
+        function showErrorStats() {
+            const stats = monitor.getErrorStats();
+            alert(`错误统计:\n总错误数: ${stats.totalErrors}\n队列大小: ${stats.queueSize}\n待上报: ${stats.pendingReports}`);
+        }
+
+        function getErrorList() {
+            const errors = monitor.getErrors();
+            console.log('所有错误:', errors);
+            alert(`已捕获 ${errors.length} 个错误，详情请查看控制台`);
+        }
+
+        function clearErrors() {
+            monitor.clearErrors();
+            document.getElementById('errorLog').innerHTML = '';
+            alert('错误已清空');
+        }
+
+        // 页面加载完成提示
+        window.addEventListener('load', function() {
+            displayError({
+                type: 'info',
+                message: '页面加载完成，错误监控已启动',
+                timestamp: Date.now()
+            });
+        });
+    </script>
+</body>
+</html>

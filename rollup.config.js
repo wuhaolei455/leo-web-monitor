@@ -2,8 +2,22 @@ const resolve = require('@rollup/plugin-node-resolve').default;
 const typescript = require('@rollup/plugin-typescript').default;
 const terser = require('@rollup/plugin-terser').default;
 const dts = require('rollup-plugin-dts').default;
+const { readFileSync } = require('fs');
+const { join } = require('path');
 
 const production = !process.env.ROLLUP_WATCH;
+
+// 读取package.json中的版本号
+const packageJson = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8'));
+const version = packageJson.version;
+
+// 创建版本替换插件
+const versionPlugin = {
+  name: 'version-plugin',
+  transform(code) {
+    return code.replace(/process\.env\.SDK_VERSION/g, `"${version}"`);
+  }
+};
 
 module.exports = [
   // ES modules build
@@ -20,6 +34,7 @@ module.exports = [
         tsconfig: './tsconfig.json',
         declaration: false
       }),
+      versionPlugin,
       production && terser()
     ].filter(Boolean)
   },
@@ -39,6 +54,7 @@ module.exports = [
         tsconfig: './tsconfig.json',
         declaration: false
       }),
+      versionPlugin,
       production && terser()
     ].filter(Boolean)
   },
@@ -58,6 +74,7 @@ module.exports = [
         tsconfig: './tsconfig.json',
         declaration: false
       }),
+      versionPlugin,
       production && terser()
     ].filter(Boolean)
   },

@@ -161,7 +161,7 @@ describe('LeoWebMonitor', () => {
   describe('版本信息', () => {
     test('应该返回正确的版本号', () => {
       const version = LeoWebMonitor.getVersion();
-      expect(version).toBe('1.0.0');
+      expect(version).toBe('1.0.4');
     });
   });
 

@@ -1,4 +1,18 @@
 /**
+ * 白屏检测配置选项
+ */
+export interface BlankScreenConfig {
+  /** 是否启用白屏检测 */
+  enabled?: boolean;
+  /** 白屏检测延迟时间(ms) */
+  delay?: number;
+  /** 白屏检测的采样点数量 */
+  sampleCount?: number;
+  /** 白屏检测的阈值(0-1) */
+  threshold?: number;
+}
+
+/**
  * SDK配置选项
  */
 export interface LeoWebMonitorConfig {
@@ -22,6 +36,8 @@ export interface LeoWebMonitorConfig {
   errorFilter?: (error: ErrorInfo) => boolean;
   /** 自定义错误处理回调 */
   onError?: (error: ErrorInfo) => void;
+  /** 白屏检测配置 */
+  blankScreen?: BlankScreenConfig;
 }
 
 /**
@@ -64,6 +80,8 @@ export enum ErrorType {
   RESOURCE_ERROR = 'resource_error',
   /** 网络请求错误 */
   NETWORK_ERROR = 'network_error',
+  /** 白屏错误 */
+  BLANK_SCREEN_ERROR = 'blank_screen_error',
   /** 自定义错误 */
   CUSTOM_ERROR = 'custom_error'
 }

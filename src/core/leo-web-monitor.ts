@@ -2,6 +2,7 @@ import { LeoWebMonitorConfig, ErrorInfo, LogLevel, SDKError, ReportResponse } fr
 import { Logger } from '../utils/logger';
 import { ErrorHandler } from './error-handler';
 import { Reporter } from './reporter';
+import { BlankScreenDetector } from '../utils/blank-screen-detector';
 import { deepMerge, isBrowser } from '../utils/helpers';
 
 /**
@@ -12,6 +13,7 @@ export class LeoWebMonitor {
   private logger: Logger;
   private errorHandler: ErrorHandler;
   private reporter?: Reporter;
+  private blankScreenDetector?: BlankScreenDetector;
   private isInitialized = false;
   private originalErrorHandler?: OnErrorEventHandler;
   private originalUnhandledRejectionHandler?: ((event: PromiseRejectionEvent) => void) | null;
@@ -31,6 +33,12 @@ export class LeoWebMonitor {
     errorFilter: () => true,
     onError: () => {
       // Default empty error handler - can be overridden by user config
+    },
+    blankScreen: {
+      enabled: true,
+      delay: 1000,
+      sampleCount: 10,
+      threshold: 0.8
     }
   };
 
@@ -62,6 +70,15 @@ export class LeoWebMonitor {
       );
     }
 
+    // 初始化白屏检测器
+    if (isBrowser()) {
+      this.blankScreenDetector = new BlankScreenDetector(this.config.blankScreen, this.logger);
+      this.blankScreenDetector.setOnBlankScreenDetected((errorInfo) => {
+        this.errorHandler.handleErrorInfo(errorInfo);
+        this.triggerReport();
+      });
+    }
+
     this.logger.info('LeoWebMonitor initialized', { config: this.config });
   }
 
@@ -83,6 +100,11 @@ export class LeoWebMonitor {
       this.setupGlobalErrorHandlers();
     }
 
+    // 启动白屏检测
+    if (this.blankScreenDetector && this.config.blankScreen.enabled) {
+      this.blankScreenDetector.start();
+    }
+
     this.isInitialized = true;
     this.logger.info('LeoWebMonitor started');
   }
@@ -96,6 +118,12 @@ export class LeoWebMonitor {
     }
 
     this.removeGlobalErrorHandlers();
+    
+    // 停止白屏检测
+    if (this.blankScreenDetector) {
+      this.blankScreenDetector.stop();
+    }
+    
     this.isInitialized = false;
     this.logger.info('LeoWebMonitor stopped');
   }
@@ -161,6 +189,21 @@ export class LeoWebMonitor {
   updateConfig(newConfig: Partial<LeoWebMonitorConfig>): void {
     this.config = deepMerge(this.config, newConfig) as Required<LeoWebMonitorConfig>;
     this.logger.setLevel(this.config.debug ? LogLevel.DEBUG : LogLevel.WARN);
+    
+    // 更新白屏检测器配置
+    if (this.blankScreenDetector && newConfig.blankScreen) {
+      this.blankScreenDetector.updateConfig(newConfig.blankScreen);
+      
+      // 如果启用状态发生变化，重新启动或停止检测
+      if (this.isInitialized && newConfig.blankScreen.enabled !== undefined) {
+        if (newConfig.blankScreen.enabled) {
+          this.blankScreenDetector.start();
+        } else {
+          this.blankScreenDetector.stop();
+        }
+      }
+    }
+    
     this.logger.info('Configuration updated', newConfig);
   }
 
@@ -210,6 +253,7 @@ export class LeoWebMonitor {
     this.logger.debug('Global error handlers set up');
   }
 
+
   /**
    * 移除全局错误处理器
    */
@@ -231,9 +275,36 @@ export class LeoWebMonitor {
   }
 
   /**
+   * 手动触发白屏检测
+   */
+  async checkBlankScreen(): Promise<boolean> {
+    if (!this.blankScreenDetector) {
+      this.logger.warn('Blank screen detector not initialized');
+      return false;
+    }
+    
+    return this.blankScreenDetector.manualCheck();
+  }
+
+  /**
+   * 获取白屏检测状态
+   */
+  getBlankScreenDetectorStatus(): { enabled: boolean; isChecking: boolean } | null {
+    if (!this.blankScreenDetector) {
+      return null;
+    }
+    
+    return {
+      enabled: this.config.blankScreen.enabled || false,
+      isChecking: false // 这里可以根据需要扩展检测器状态
+    };
+  }
+
+  /**
    * 获取SDK版本
    */
   static getVersion(): string {
-    return '1.0.0';
+    // 在构建时通过rollup插件注入版本号，或者从package.json读取
+    return process.env.SDK_VERSION || '1.0.4';
   }
 }

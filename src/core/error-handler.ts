@@ -101,6 +101,24 @@ export class ErrorHandler {
   }
 
   /**
+   * 处理错误信息（公共方法）
+   */
+  handleErrorInfo(errorInfo: ErrorInfo): void {
+    this.processError(errorInfo);
+  }
+
+  handleBlankScreenError(): void {
+    const errorInfo: ErrorInfo = {
+      message: 'Blank screen error',
+      type: ErrorType.BLANK_SCREEN_ERROR,
+      ...getErrorBasicInfo()
+    };
+
+    this.processError(errorInfo);
+  }
+
+
+  /**
    * 处理错误
    */
   private processError(errorInfo: ErrorInfo): void {

@@ -115,7 +115,11 @@ export class Reporter {
   /**
    * 发起HTTP请求
    */
-  private async makeRequest(payload: any): Promise<ReportResponse> {
+  private async makeRequest(payload: { 
+    errors: ErrorInfo[]; 
+    timestamp: number; 
+    sdk: { name: string; version: string }; 
+  }): Promise<ReportResponse> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 

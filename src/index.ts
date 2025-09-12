@@ -5,11 +5,11 @@
  */
 
 // 导出主要类
-export { LeoErrorMonitor } from './core/leo-error-monitor';
+export { LeoWebMonitor } from './core/leo-web-monitor';
 
 // 导出类型定义
 export type {
-  LeoErrorMonitorConfig,
+  LeoWebMonitorConfig,
   ErrorInfo,
   ReportResponse
 } from './types';
@@ -29,4 +29,4 @@ export {
 } from './utils/helpers';
 
 // 默认导出
-export { LeoErrorMonitor as default } from './core/leo-error-monitor';
+export { LeoWebMonitor as default } from './core/leo-web-monitor';

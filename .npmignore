@@ -1,0 +1,65 @@
+# Source files
+src/
+*.ts
+!dist/*.d.ts
+
+# Configuration files
+tsconfig.json
+rollup.config.js
+jest.config.js
+.eslintrc*
+
+# Development files
+scripts/
+.vscode/
+.idea/
+
+# Test files
+**/*.test.ts
+**/*.test.js
+**/__tests__/
+coverage/
+
+# Documentation (除了README)
+docs/
+*.md
+!README.md
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.travis.yml
+.circleci/
+azure-pipelines.yml
+
+# Environment files
+.env*
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+*.tgz
+*.tar.gz
+
+# Temporary files
+tmp/
+temp/
+
+# IDE files
+*.swp
+*.swo
+*~

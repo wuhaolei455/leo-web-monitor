@@ -1,17 +1,19 @@
-import { LeoErrorMonitorConfig, ErrorInfo, LogLevel, SDKError, ReportResponse } from '../types';
+import { LeoWebMonitorConfig, ErrorInfo, LogLevel, SDKError, ReportResponse } from '../types';
 import { Logger } from '../utils/logger';
 import { ErrorHandler } from './error-handler';
 import { Reporter } from './reporter';
+import { BlankScreenDetector } from '../utils/blank-screen-detector';
 import { deepMerge, isBrowser } from '../utils/helpers';
 
 /**
  * Leo错误监控SDK主类
  */
-export class LeoErrorMonitor {
-  private config: LeoErrorMonitorConfig & Required<Pick<LeoErrorMonitorConfig, 'timeout' | 'retryTimes' | 'debug' | 'autoCapture' | 'maxErrorQueueSize' | 'reportInterval'>>;
+export class LeoWebMonitor {
+  private config: Required<LeoWebMonitorConfig>;
   private logger: Logger;
   private errorHandler: ErrorHandler;
   private reporter?: Reporter;
+  private blankScreenDetector?: BlankScreenDetector;
   private isInitialized = false;
   private originalErrorHandler?: OnErrorEventHandler;
   private originalUnhandledRejectionHandler?: ((event: PromiseRejectionEvent) => void) | null;
@@ -19,7 +21,7 @@ export class LeoErrorMonitor {
   /**
    * 默认配置
    */
-  private static readonly DEFAULT_CONFIG: Required<LeoErrorMonitorConfig> = {
+  private static readonly DEFAULT_CONFIG: Required<LeoWebMonitorConfig> = {
     apiKey: '',
     endpoint: '',
     timeout: 5000,
@@ -29,13 +31,21 @@ export class LeoErrorMonitor {
     maxErrorQueueSize: 100,
     reportInterval: 2000,
     errorFilter: () => true,
-    onError: () => {}
+    onError: () => {
+      // Default empty error handler - can be overridden by user config
+    },
+    blankScreen: {
+      enabled: true,
+      delay: 1000,
+      sampleCount: 10,
+      threshold: 0.8
+    }
   };
 
-  constructor(config: LeoErrorMonitorConfig | string) {
+  constructor(config: LeoWebMonitorConfig | string) {
     // 支持直接传入apiKey字符串
     const configObj = typeof config === 'string' ? { apiKey: config } : config;
-    this.config = deepMerge({}, LeoErrorMonitor.DEFAULT_CONFIG, configObj) as typeof this.config;
+    this.config = deepMerge({}, LeoWebMonitor.DEFAULT_CONFIG, configObj) as Required<LeoWebMonitorConfig>;
 
     // 初始化日志器
     this.logger = new Logger(this.config.debug ? LogLevel.DEBUG : LogLevel.WARN);
@@ -60,7 +70,16 @@ export class LeoErrorMonitor {
       );
     }
 
-    this.logger.info('LeoErrorMonitor initialized', { config: this.config });
+    // 初始化白屏检测器
+    if (isBrowser()) {
+      this.blankScreenDetector = new BlankScreenDetector(this.config.blankScreen, this.logger);
+      this.blankScreenDetector.setOnBlankScreenDetected((errorInfo) => {
+        this.errorHandler.handleErrorInfo(errorInfo);
+        this.triggerReport();
+      });
+    }
+
+    this.logger.info('LeoWebMonitor initialized', { config: this.config });
   }
 
   /**
@@ -68,12 +87,12 @@ export class LeoErrorMonitor {
    */
   start(): void {
     if (this.isInitialized) {
-      this.logger.warn('LeoErrorMonitor is already started');
+      this.logger.warn('LeoWebMonitor is already started');
       return;
     }
 
     if (!isBrowser()) {
-      this.logger.warn('LeoErrorMonitor only works in browser environment');
+      this.logger.warn('LeoWebMonitor only works in browser environment');
       return;
     }
 
@@ -81,8 +100,13 @@ export class LeoErrorMonitor {
       this.setupGlobalErrorHandlers();
     }
 
+    // 启动白屏检测
+    if (this.blankScreenDetector && this.config.blankScreen.enabled) {
+      this.blankScreenDetector.start();
+    }
+
     this.isInitialized = true;
-    this.logger.info('LeoErrorMonitor started');
+    this.logger.info('LeoWebMonitor started');
   }
 
   /**
@@ -94,14 +118,20 @@ export class LeoErrorMonitor {
     }
 
     this.removeGlobalErrorHandlers();
+    
+    // 停止白屏检测
+    if (this.blankScreenDetector) {
+      this.blankScreenDetector.stop();
+    }
+    
     this.isInitialized = false;
-    this.logger.info('LeoErrorMonitor stopped');
+    this.logger.info('LeoWebMonitor stopped');
   }
 
   /**
    * 手动报告错误
    */
-  captureError(error: Error | string, extra?: Record<string, any>): void {
+  captureError(error: Error | string, extra?: Record<string, unknown>): void {
     this.errorHandler.handleCustomError(error, extra);
     this.triggerReport();
   }
@@ -109,7 +139,7 @@ export class LeoErrorMonitor {
   /**
    * 手动报告消息
    */
-  captureMessage(message: string, extra?: Record<string, any>): void {
+  captureMessage(message: string, extra?: Record<string, unknown>): void {
     this.captureError(message, extra);
   }
 
@@ -156,9 +186,24 @@ export class LeoErrorMonitor {
   /**
    * 更新配置
    */
-  updateConfig(newConfig: Partial<LeoErrorMonitorConfig>): void {
-    this.config = deepMerge(this.config, newConfig) as typeof this.config;
+  updateConfig(newConfig: Partial<LeoWebMonitorConfig>): void {
+    this.config = deepMerge(this.config, newConfig) as Required<LeoWebMonitorConfig>;
     this.logger.setLevel(this.config.debug ? LogLevel.DEBUG : LogLevel.WARN);
+    
+    // 更新白屏检测器配置
+    if (this.blankScreenDetector && newConfig.blankScreen) {
+      this.blankScreenDetector.updateConfig(newConfig.blankScreen);
+      
+      // 如果启用状态发生变化，重新启动或停止检测
+      if (this.isInitialized && newConfig.blankScreen.enabled !== undefined) {
+        if (newConfig.blankScreen.enabled) {
+          this.blankScreenDetector.start();
+        } else {
+          this.blankScreenDetector.stop();
+        }
+      }
+    }
+    
     this.logger.info('Configuration updated', newConfig);
   }
 
@@ -208,6 +253,7 @@ export class LeoErrorMonitor {
     this.logger.debug('Global error handlers set up');
   }
 
+
   /**
    * 移除全局错误处理器
    */
@@ -229,9 +275,36 @@ export class LeoErrorMonitor {
   }
 
   /**
+   * 手动触发白屏检测
+   */
+  async checkBlankScreen(): Promise<boolean> {
+    if (!this.blankScreenDetector) {
+      this.logger.warn('Blank screen detector not initialized');
+      return false;
+    }
+    
+    return this.blankScreenDetector.manualCheck();
+  }
+
+  /**
+   * 获取白屏检测状态
+   */
+  getBlankScreenDetectorStatus(): { enabled: boolean; isChecking: boolean } | null {
+    if (!this.blankScreenDetector) {
+      return null;
+    }
+    
+    return {
+      enabled: this.config.blankScreen.enabled || false,
+      isChecking: false // 这里可以根据需要扩展检测器状态
+    };
+  }
+
+  /**
    * 获取SDK版本
    */
   static getVersion(): string {
-    return '1.0.0';
+    // 在构建时通过rollup插件注入版本号，或者从package.json读取
+    return process.env.SDK_VERSION || '1.0.4';
   }
 }

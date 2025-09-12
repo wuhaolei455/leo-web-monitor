@@ -1,29 +1,51 @@
 {
-  "name": "leo-error-monitor",
-  "version": "1.0.0",
-  "description": "A lightweight JavaScript runtime error monitoring SDK",
+  "name": "leo-web-monitor",
+  "version": "1.1.0",
+  "description": "A lightweight JavaScript runtime error monitoring SDK for capturing and reporting frontend errors",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "examples"
   ],
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build && npm run test",
+    "publish:patch": "node scripts/publish.js patch",
+    "publish:minor": "node scripts/publish.js minor",
+    "publish:major": "node scripts/publish.js major",
+    "publish:dry": "npm pack --dry-run",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major"
   },
   "keywords": [
-    "error",
-    "monitor",
+    "error-monitoring",
     "javascript",
     "typescript",
-    "sdk"
+    "sdk",
+    "error-tracking",
+    "frontend",
+    "browser",
+    "monitoring",
+    "crash-reporting",
+    "error-handler"
   ],
   "author": "Leo",
   "license": "MIT",
+  "homepage": "https://github.com/whl555/leo-web-monitor#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/whl555/leo-web-monitor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/whl555/leo-web-monitor/issues"
+  },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",

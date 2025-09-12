@@ -2,7 +2,7 @@
  * Leo Error Monitor SDK 测试
  */
 
-import { LeoErrorMonitor } from '../core/leo-error-monitor';
+import { LeoWebMonitor } from '../core/leo-web-monitor';
 import { ErrorType } from '../types';
 
 // Mock DOM APIs
@@ -14,21 +14,21 @@ const mockNavigator = {
   userAgent: 'Mozilla/5.0 (Test Browser)'
 };
 
-// @ts-ignore
+// @ts-expect-error - Mocking window.location for testing
 delete window.location;
-// @ts-ignore
+// @ts-expect-error - Mocking window.navigator for testing
 delete window.navigator;
 
-// @ts-ignore
+// @ts-expect-error - Assigning mock location for testing
 window.location = mockLocation;
-// @ts-ignore
+// @ts-expect-error - Assigning mock navigator for testing
 window.navigator = mockNavigator;
 
-describe('LeoErrorMonitor', () => {
-  let monitor: LeoErrorMonitor;
+describe('LeoWebMonitor', () => {
+  let monitor: LeoWebMonitor;
 
   beforeEach(() => {
-    monitor = new LeoErrorMonitor({
+    monitor = new LeoWebMonitor({
       debug: true,
       autoCapture: false // 禁用自动捕获以便测试
     });
@@ -47,13 +47,13 @@ describe('LeoErrorMonitor', () => {
         timeout: 10000
       };
 
-      const testMonitor = new LeoErrorMonitor(config);
-      expect(testMonitor).toBeInstanceOf(LeoErrorMonitor);
+      const testMonitor = new LeoWebMonitor(config);
+      expect(testMonitor).toBeInstanceOf(LeoWebMonitor);
     });
 
     test('应该支持字符串配置（apiKey）', () => {
-      const testMonitor = new LeoErrorMonitor('test-api-key');
-      expect(testMonitor).toBeInstanceOf(LeoErrorMonitor);
+      const testMonitor = new LeoWebMonitor('test-api-key');
+      expect(testMonitor).toBeInstanceOf(LeoWebMonitor);
     });
   });
 
@@ -141,7 +141,7 @@ describe('LeoErrorMonitor', () => {
 
   describe('错误过滤', () => {
     test('应该支持错误过滤', () => {
-      const filterMonitor = new LeoErrorMonitor({
+      const filterMonitor = new LeoWebMonitor({
         debug: true,
         autoCapture: false,
         errorFilter: (error) => !error.message.includes('filtered')
@@ -160,8 +160,8 @@ describe('LeoErrorMonitor', () => {
 
   describe('版本信息', () => {
     test('应该返回正确的版本号', () => {
-      const version = LeoErrorMonitor.getVersion();
-      expect(version).toBe('1.0.0');
+      const version = LeoWebMonitor.getVersion();
+      expect(version).toBe('1.0.4');
     });
   });
 

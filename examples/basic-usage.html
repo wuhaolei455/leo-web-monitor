@@ -56,15 +56,21 @@
     </style>
 </head>
 <body>
-    <h1>Leo Error Monitor - 基础使用示例</h1>
+    <h1>Leo Web Monitor - 基础使用示例</h1>
     
     <div class="demo-section">
         <h3>1. 基础初始化</h3>
         <p>SDK已自动初始化并开始监控错误</p>
-        <pre><code>const monitor = new LeoErrorMonitor({
+        <pre><code>const monitor = new LeoWebMonitor({
   debug: true,
   autoCapture: true,
-  maxErrorQueueSize: 50
+  maxErrorQueueSize: 50,
+  blankScreen: {
+    enabled: true,
+    delay: 1000,
+    sampleCount: 10,
+    threshold: 0.8
+  }
 });</code></pre>
     </div>
 
@@ -84,7 +90,26 @@
     </div>
 
     <div class="demo-section">
-        <h3>3. 错误日志</h3>
+        <h3>3. 白屏检测功能</h3>
+        <p>白屏检测可以帮助发现页面渲染异常的情况</p>
+        
+        <button onclick="checkBlankScreen()">手动检测白屏</button>
+        <button onclick="getBlankScreenStatus()">获取检测状态</button>
+        <button onclick="simulateBlankScreen()">模拟白屏情况</button>
+        
+        <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+            <strong>白屏检测说明:</strong>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+                <li>SDK会在页面加载后自动进行白屏检测</li>
+                <li>默认延迟1秒后开始检测，采样10个随机点</li>
+                <li>当80%以上的采样点为空白时，判定为白屏</li>
+                <li>检测到白屏会自动上报错误信息</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h3>4. 错误日志</h3>
         <div id="errorLog"></div>
     </div>
 
@@ -93,10 +118,17 @@
     
     <script>
         // 初始化监控器
-        const monitor = new LeoErrorMonitor.default({
+        const monitor = new LeoWebMonitor.default({
             debug: true,
             autoCapture: true,
             maxErrorQueueSize: 50,
+            // 白屏检测配置
+            blankScreen: {
+                enabled: true,
+                delay: 1000,
+                sampleCount: 10,
+                threshold: 0.8
+            },
             onError: function(errorInfo) {
                 displayError(errorInfo);
             }
@@ -165,6 +197,33 @@
             const errors = monitor.getErrors();
             console.log('所有错误:', errors);
             alert(`已捕获 ${errors.length} 个错误，详情请查看控制台`);
+        }
+
+        // 白屏检测相关功能
+        async function checkBlankScreen() {
+            const isBlank = await monitor.checkBlankScreen();
+            alert(`白屏检测结果: ${isBlank ? '检测到白屏' : '页面正常'}`);
+        }
+
+        function getBlankScreenStatus() {
+            const status = monitor.getBlankScreenDetectorStatus();
+            if (status) {
+                alert(`白屏检测状态:\n启用: ${status.enabled ? '是' : '否'}\n检测中: ${status.isChecking ? '是' : '否'}`);
+            } else {
+                alert('白屏检测器未初始化');
+            }
+        }
+
+        function simulateBlankScreen() {
+            // 模拟白屏情况
+            document.body.style.backgroundColor = 'white';
+            document.body.innerHTML = '<div style="width:100%;height:100vh;background:white;"></div>';
+            setTimeout(() => {
+                alert('已模拟白屏情况，3秒后将恢复页面');
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            }, 1000);
         }
 
         function clearErrors() {

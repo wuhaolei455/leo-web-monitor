@@ -1,4 +1,4 @@
-# Leo Error Monitor
+# Leo Web Monitor
 
 一个轻量级的JavaScript运行时错误监控SDK，支持自动捕获和上报各种类型的前端错误。
 
@@ -17,16 +17,16 @@
 ### 安装
 
 ```bash
-npm install leo-error-monitor
+npm install leo-web-monitor
 ```
 
 ### 基础使用
 
 ```javascript
-import { LeoErrorMonitor } from 'leo-error-monitor';
+import { LeoWebMonitor } from 'leo-web-monitor';
 
 // 简单初始化
-const monitor = new LeoErrorMonitor({
+const monitor = new LeoWebMonitor({
   apiKey: 'your-api-key',
   endpoint: 'https://your-api-endpoint.com/errors',
   debug: true
@@ -47,7 +47,7 @@ monitor.captureError('Something went wrong', {
 ```html
 <script src="./dist/index.umd.js"></script>
 <script>
-  const monitor = new LeoErrorMonitor.default({
+  const monitor = new LeoWebMonitor.default({
     debug: true,
     autoCapture: true
   });
@@ -58,7 +58,7 @@ monitor.captureError('Something went wrong', {
 ## 配置选项
 
 ```javascript
-const monitor = new LeoErrorMonitor({
+const monitor = new LeoWebMonitor({
   // 必选配置
   apiKey: 'your-api-key',              // API密钥
   endpoint: 'https://api.example.com', // 上报端点
@@ -196,9 +196,9 @@ interface ErrorInfo {
 ### 与React集成
 
 ```javascript
-import { LeoErrorMonitor } from 'leo-error-monitor';
+import { LeoWebMonitor } from 'leo-web-monitor';
 
-const monitor = new LeoErrorMonitor({
+const monitor = new LeoWebMonitor({
   apiKey: 'your-api-key',
   endpoint: 'https://api.example.com/errors'
 });
@@ -224,9 +224,9 @@ class ErrorBoundary extends React.Component {
 ### 与Vue集成
 
 ```javascript
-import { LeoErrorMonitor } from 'leo-error-monitor';
+import { LeoWebMonitor } from 'leo-web-monitor';
 
-const monitor = new LeoErrorMonitor({
+const monitor = new LeoWebMonitor({
   apiKey: 'your-api-key',
   endpoint: 'https://api.example.com/errors'
 });

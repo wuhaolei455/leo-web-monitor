@@ -635,6 +635,7 @@
 长帧数: ${perfData.longFrameCount}
 严重卡顿: ${perfData.severeFrameCount}
 总帧数: ${perfData.totalFrames}
+掉帧率: ${(perfData.droppedFrameRate * 100).toFixed(2)}%
 
 流畅度评分: ${perfData.smoothScore}/100
 监控时长: ${(perfData.duration / 1000).toFixed(2)}秒
@@ -692,6 +693,7 @@
             │ 流畅度评分: ${Math.round(finalPerfData.smoothScore)} / 100          │
             │ 平均 FPS: ${finalPerfData.avgFps.toFixed(2)}                 │
             │ 最低 FPS: ${finalPerfData.minFps.toFixed(2)}                 │
+            │ 掉帧率: ${(finalPerfData.droppedFrameRate * 100).toFixed(2)}%                │
             │ 长帧数 (>50ms): ${finalPerfData.longFrameCount}              │
             │ 严重卡顿 (>100ms): ${finalPerfData.severeFrameCount}        │
             │ 监控总时长: ${(finalPerfData.duration / 1000).toFixed(2)}s            │

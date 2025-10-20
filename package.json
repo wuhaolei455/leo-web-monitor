@@ -1,6 +1,6 @@
 {
   "name": "leo-web-monitor",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "A lightweight JavaScript runtime error monitoring SDK for capturing and reporting frontend errors",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",

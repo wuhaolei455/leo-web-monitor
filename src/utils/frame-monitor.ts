@@ -40,6 +40,9 @@ export class FrameMonitor {
     reportInterval: 10000, // 每10秒上报一次
     onPerformanceData: () => {
       // Default empty callback
+    },
+    onScrollPerformanceData: () => {
+      // Default empty callback
     }
   };
 
@@ -399,6 +402,10 @@ export class FrameMonitor {
     );
 
     this.logger.info(`Scroll performance, Dropped frame rate: ${(scrollData.droppedFrameRate * 100).toFixed(2)}%`, scrollData);
+
+    if (this.config.onScrollPerformanceData) {
+      this.config.onScrollPerformanceData(scrollData);
+    }
   }
 
   /**

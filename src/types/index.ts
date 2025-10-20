@@ -32,6 +32,8 @@ export interface FrameMonitorConfig {
   reportInterval?: number;
   /** 性能数据回调 */
   onPerformanceData?: (data: FramePerformanceData) => void;
+  /** 滚动性能数据回调 */
+  onScrollPerformanceData?: (data: ScrollPerformanceData) => void;
 }
 
 /**

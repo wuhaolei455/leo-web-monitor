@@ -409,8 +409,11 @@
         monitorScroll: true,
         autoReport: true,
         onPerformanceData: (data) => {
-          console.log('[实时性能数据]', data);
+          // console.log('[实时性能数据]', data);
           updatePerformanceUI(data);
+        },
+        onScrollPerformanceData: (data) => {
+          console.log('%c[滚动性能数据]', 'background: #667eea; color: white; padding: 2px 6px; border-radius: 4px;', data);
         }
       }
     });

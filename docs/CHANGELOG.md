@@ -7,10 +7,23 @@
 
 ## [Unreleased]
 
-### 计划新增
 - 更多错误类型支持
-- 性能监控功能
 - 自定义上报策略
+
+## [1.2.0] - 2025-10-20
+
+### 新增
+- ✨ **Frame性能监控**：
+  - 新增 `frameMonitor` 配置项，用于启用和配置帧性能监控。
+  - 实时监控页面FPS（每秒帧数）、长帧和严重卡顿。
+  - 提供 `getFramePerformanceData()` 方法以获取详细的性能数据，包括当前FPS、平均FPS、最低/最高FPS、流畅度评分等。
+  - 提供 `getFrameHistory()` 方法以获取最近的帧历史记录。
+  - 支持滚动性能监控，自动识别滚动过程中的性能表现。
+  - 可通过 `onPerformanceData` 回调函数实时获取性能数据。
+
+### 文档
+- 📝 新增 `FRAME_PERFORMANCE_MONITOR.md` 文档，详细介绍了Frame性能监控功能的使用方法和配置选项。
+- 💡 新增 `frame-monitor-demo.html` 示例页面，演示了Frame性能监控的实际效果。
 
 ## [1.0.0] - 2024-01-XX
 

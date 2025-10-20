@@ -1,8 +1,9 @@
-import { LeoWebMonitorConfig, ErrorInfo, LogLevel, SDKError, ReportResponse } from '../types';
+import { LeoWebMonitorConfig, ErrorInfo, LogLevel, SDKError, ReportResponse, FramePerformanceData } from '../types';
 import { Logger } from '../utils/logger';
 import { ErrorHandler } from './error-handler';
 import { Reporter } from './reporter';
 import { BlankScreenDetector } from '../utils/blank-screen-detector';
+import { FrameMonitor } from '../utils/frame-monitor';
 import { deepMerge, isBrowser } from '../utils/helpers';
 
 /**
@@ -14,6 +15,7 @@ export class LeoWebMonitor {
   private errorHandler: ErrorHandler;
   private reporter?: Reporter;
   private blankScreenDetector?: BlankScreenDetector;
+  private frameMonitor?: FrameMonitor;
   private isInitialized = false;
   private originalErrorHandler?: OnErrorEventHandler;
   private originalUnhandledRejectionHandler?: ((event: PromiseRejectionEvent) => void) | null;
@@ -39,6 +41,18 @@ export class LeoWebMonitor {
       delay: 1000,
       sampleCount: 10,
       threshold: 0.8
+    },
+    frameMonitor: {
+      enabled: true,
+      updateInterval: 1000,
+      longFrameThreshold: 50,
+      severeFrameThreshold: 100,
+      monitorScroll: true,
+      autoReport: false,
+      reportInterval: 10000,
+      onPerformanceData: () => {
+        // Default empty callback
+      }
     }
   };
 
@@ -77,6 +91,9 @@ export class LeoWebMonitor {
         this.errorHandler.handleErrorInfo(errorInfo);
         this.triggerReport();
       });
+
+      // 初始化Frame性能监控器
+      this.frameMonitor = new FrameMonitor(this.config.frameMonitor, this.logger);
     }
 
     this.logger.info('LeoWebMonitor initialized', { config: this.config });
@@ -105,6 +122,11 @@ export class LeoWebMonitor {
       this.blankScreenDetector.start();
     }
 
+    // 启动Frame性能监控
+    if (this.frameMonitor && this.config.frameMonitor?.enabled) {
+      this.frameMonitor.start();
+    }
+
     this.isInitialized = true;
     this.logger.info('LeoWebMonitor started');
   }
@@ -122,6 +144,11 @@ export class LeoWebMonitor {
     // 停止白屏检测
     if (this.blankScreenDetector) {
       this.blankScreenDetector.stop();
+    }
+
+    // 停止Frame性能监控
+    if (this.frameMonitor) {
+      this.frameMonitor.stop();
     }
     
     this.isInitialized = false;
@@ -200,6 +227,20 @@ export class LeoWebMonitor {
           this.blankScreenDetector.start();
         } else {
           this.blankScreenDetector.stop();
+        }
+      }
+    }
+
+    // 更新Frame性能监控器配置
+    if (this.frameMonitor && newConfig.frameMonitor) {
+      this.frameMonitor.updateConfig(newConfig.frameMonitor);
+      
+      // 如果启用状态发生变化，重新启动或停止监控
+      if (this.isInitialized && newConfig.frameMonitor.enabled !== undefined) {
+        if (newConfig.frameMonitor.enabled) {
+          this.frameMonitor.start();
+        } else {
+          this.frameMonitor.stop();
         }
       }
     }
@@ -298,6 +339,44 @@ export class LeoWebMonitor {
       enabled: this.config.blankScreen.enabled || false,
       isChecking: false // 这里可以根据需要扩展检测器状态
     };
+  }
+
+  /**
+   * 获取Frame性能数据
+   */
+  getFramePerformanceData(): FramePerformanceData | null {
+    if (!this.frameMonitor) {
+      this.logger.warn('Frame monitor not initialized');
+      return null;
+    }
+    
+    return this.frameMonitor.getPerformanceData();
+  }
+
+  /**
+   * 获取Frame监控状态
+   */
+  getFrameMonitorStatus(): { enabled: boolean; isMonitoring: boolean } | null {
+    if (!this.frameMonitor) {
+      return null;
+    }
+    
+    return {
+      enabled: this.config.frameMonitor?.enabled || false,
+      isMonitoring: this.isInitialized && (this.config.frameMonitor?.enabled || false)
+    };
+  }
+
+  /**
+   * 获取最近的帧历史
+   */
+  getFrameHistory(count: number = 100) {
+    if (!this.frameMonitor) {
+      this.logger.warn('Frame monitor not initialized');
+      return [];
+    }
+    
+    return this.frameMonitor.getFrameHistory(count);
   }
 
   /**

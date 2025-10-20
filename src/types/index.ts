@@ -13,6 +13,28 @@ export interface BlankScreenConfig {
 }
 
 /**
+ * Frame性能监控配置选项
+ */
+export interface FrameMonitorConfig {
+  /** 是否启用帧率监控 */
+  enabled?: boolean;
+  /** FPS监控更新频率(ms) */
+  updateInterval?: number;
+  /** 长帧阈值(ms) - 超过此时间的帧被认为是卡顿 */
+  longFrameThreshold?: number;
+  /** 严重卡顿阈值(ms) */
+  severeFrameThreshold?: number;
+  /** 是否监控滚动事件 */
+  monitorScroll?: boolean;
+  /** 是否自动上报性能数据 */
+  autoReport?: boolean;
+  /** 性能数据上报间隔(ms) */
+  reportInterval?: number;
+  /** 性能数据回调 */
+  onPerformanceData?: (data: FramePerformanceData) => void;
+}
+
+/**
  * SDK配置选项
  */
 export interface LeoWebMonitorConfig {
@@ -38,6 +60,8 @@ export interface LeoWebMonitorConfig {
   onError?: (error: ErrorInfo) => void;
   /** 白屏检测配置 */
   blankScreen?: BlankScreenConfig;
+  /** Frame性能监控配置 */
+  frameMonitor?: FrameMonitorConfig;
 }
 
 /**
@@ -118,4 +142,72 @@ export interface ReportResponse {
   success: boolean;
   message?: string;
   errorId?: string;
+}
+
+/**
+ * Frame性能数据接口
+ */
+export interface FramePerformanceData {
+  /** 当前FPS */
+  fps: number;
+  /** 平均FPS */
+  avgFps: number;
+  /** 最小FPS */
+  minFps: number;
+  /** 最大FPS */
+  maxFps: number;
+  /** 长帧数量 */
+  longFrameCount: number;
+  /** 严重卡顿帧数量 */
+  severeFrameCount: number;
+  /** 总帧数 */
+  totalFrames: number;
+  /** 流畅度评分 (0-100) */
+  smoothScore: number;
+  /** 监控时长(ms) */
+  duration: number;
+  /** 时间戳 */
+  timestamp: number;
+  /** 页面URL */
+  url: string;
+  /** 额外信息 */
+  extra?: Record<string, unknown>;
+}
+
+/**
+ * 单帧信息接口
+ */
+export interface FrameInfo {
+  /** 帧序号 */
+  frameId: number;
+  /** 帧耗时(ms) */
+  duration: number;
+  /** 时间戳 */
+  timestamp: number;
+  /** 是否为长帧 */
+  isLongFrame: boolean;
+  /** 是否为严重卡顿帧 */
+  isSevereFrame: boolean;
+}
+
+/**
+ * 滚动性能数据接口
+ */
+export interface ScrollPerformanceData {
+  /** 滚动开始时间 */
+  startTime: number;
+  /** 滚动结束时间 */
+  endTime: number;
+  /** 滚动距离 */
+  scrollDistance: number;
+  /** 滚动期间的平均FPS */
+  avgFps: number;
+  /** 滚动期间的最小FPS */
+  minFps: number;
+  /** 滚动期间的长帧数 */
+  longFrameCount: number;
+  /** 滚动流畅度评分 (0-100) */
+  smoothScore: number;
+  /** 页面URL */
+  url: string;
 }

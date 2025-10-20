@@ -11,7 +11,11 @@ export { LeoWebMonitor } from './core/leo-web-monitor';
 export type {
   LeoWebMonitorConfig,
   ErrorInfo,
-  ReportResponse
+  ReportResponse,
+  FrameMonitorConfig,
+  FramePerformanceData,
+  FrameInfo,
+  ScrollPerformanceData
 } from './types';
 
 export {
@@ -27,6 +31,3 @@ export {
   generateId,
   safeStringify
 } from './utils/helpers';
-
-// 默认导出
-export { LeoWebMonitor as default } from './core/leo-web-monitor';

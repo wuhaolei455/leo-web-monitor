@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frame性能监控 - 滑动卡顿演示</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+
+    /* 性能监控面板 */
+    .performance-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 320px;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      z-index: 9999;
+      font-size: 13px;
+    }
+
+    .panel-header {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-header .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+    }
+
+    .metric-label {
+      color: #a8a8a8;
+    }
+
+    .metric-value {
+      font-weight: bold;
+      font-family: monospace;
+      font-size: 14px;
+    }
+
+    .metric-value.good {
+      color: #4ade80;
+    }
+
+    .metric-value.warning {
+      color: #fbbf24;
+    }
+
+    .metric-value.bad {
+      color: #f87171;
+    }
+
+    .fps-chart {
+      width: 100%;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      margin: 15px 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .fps-bar {
+      position: absolute;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(to top, #667eea, #764ba2);
+      transition: height 0.3s ease;
+    }
+
+    .score-circle {
+      width: 80px;
+      height: 80px;
+      margin: 15px auto;
+      position: relative;
+    }
+
+    .score-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    /* 主内容区域 */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .header p {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+
+    /* 控制面板 */
+    .control-panel {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .control-panel h2 {
+      margin-bottom: 20px;
+      color: #667eea;
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn.danger {
+      background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    }
+
+    .btn.success {
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    }
+
+    /* 卡片网格 */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .card h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    .card p {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .card-image {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+      border-radius: 8px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+    }
+
+    /* 重量级元素 - 用于制造卡顿 */
+    .heavy-element {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .heavy-element h2 {
+      color: #f87171;
+      margin-bottom: 20px;
+    }
+
+    .particle-container {
+      width: 100%;
+      height: 400px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      animation: float 3s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) translateX(0);
+      }
+      50% {
+        transform: translateY(-20px) translateX(10px);
+      }
+    }
+
+    /* 滚动提示 */
+    .scroll-hint {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 15px 30px;
+      border-radius: 30px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      animation: bounce 2s infinite;
+      z-index: 1000;
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateX(-50%) translateY(0);
+      }
+      50% {
+        transform: translateX(-50%) translateY(-10px);
+      }
+    }
+
+    .scroll-hint::after {
+      content: '↓';
+      margin-left: 10px;
+      font-size: 20px;
+      color: #667eea;
+    }
+  </style>
+</head>
+<body>
+  <!-- 性能监控面板 -->
+  <div class="performance-panel">
+    <div class="panel-header">
+      <span>Frame性能监控</span>
+      <span class="status-dot"></span>
+    </div>
+    
+    <div class="metric">
+      <span class="metric-label">当前 FPS</span>
+      <span class="metric-value" id="current-fps">60.00</span>
+    </div>
+    
+    <div class="metric">
+      <span class="metric-label">平均 FPS</span>
+      <span class="metric-value" id="avg-fps">60.00</span>
+    </div>
+    
+    <div class="metric">
+      <span class="metric-label">最小 FPS</span>
+      <span class="metric-value" id="min-fps">60.00</span>
+    </div>
+    
+    <div class="fps-chart" id="fps-chart"></div>
+    
+    <div class="metric">
+      <span class="metric-label">长帧数</span>
+      <span class="metric-value" id="long-frames">0</span>
+    </div>
+    
+    <div class="metric">
+      <span class="metric-label">严重卡顿</span>
+      <span class="metric-value" id="severe-frames">0</span>
+    </div>
+    
+    <div class="metric">
+      <span class="metric-label">总帧数</span>
+      <span class="metric-value" id="total-frames">0</span>
+    </div>
+    
+    <div class="score-circle">
+      <svg width="80" height="80" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="35" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
+        <circle id="score-circle" cx="40" cy="40" r="35" fill="none" stroke="#4ade80" stroke-width="6" 
+                stroke-dasharray="220" stroke-dashoffset="0" 
+                transform="rotate(-90 40 40)" stroke-linecap="round"/>
+      </svg>
+      <div class="score-value" id="smooth-score">100</div>
+    </div>
+    
+    <div style="text-align: center; color: #a8a8a8; font-size: 12px;">流畅度评分</div>
+  </div>
+
+  <!-- 主内容 -->
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Frame性能监控演示</h1>
+      <p>滚动页面观察帧率变化和卡顿情况</p>
+    </div>
+
+    <!-- 控制面板 -->
+    <div class="control-panel">
+      <h2>🎮 性能测试控制台</h2>
+      <div class="controls">
+        <button class="btn" onclick="addHeavyElements()">添加重量级元素</button>
+        <button class="btn danger" onclick="createJank()">制造卡顿</button>
+        <button class="btn success" onclick="scrollToBottom()">自动滚动</button>
+        <button class="btn" onclick="resetDemo()">重置演示</button>
+        <button class="btn" onclick="showPerformanceData()">查看性能数据</button>
+      </div>
+    </div>
+
+    <!-- 卡片网格 -->
+    <div class="card-grid" id="card-container">
+      <!-- 动态生成卡片 -->
+    </div>
+
+    <!-- 重量级元素容器 -->
+    <div id="heavy-container"></div>
+  </div>
+
+  <div class="scroll-hint">滚动页面测试性能</div>
+
+  <!-- 引入SDK -->
+  <script src="../dist/index.umd.js"></script>
+  
+  <script>
+    // 初始化SDK
+    const monitor = new LeoWebMonitor({
+      apiKey: 'demo-key',
+      endpoint: 'https://api.example.com/report',
+      debug: true,
+      frameMonitor: {
+        enabled: true,
+        updateInterval: 500,
+        longFrameThreshold: 50,
+        severeFrameThreshold: 100,
+        monitorScroll: true,
+        autoReport: true,
+        onPerformanceData: (data) => {
+          console.log('[实时性能数据]', data);
+          updatePerformanceUI(data);
+        }
+      }
+    });
+
+    // 启动监控
+    monitor.start();
+
+    // FPS历史记录
+    let fpsHistory = [];
+    const MAX_FPS_HISTORY = 60;
+
+    // 立即获取初始性能数据
+    setTimeout(() => {
+      const initialData = monitor.getFramePerformanceData();
+      if (initialData) {
+        updatePerformanceUI(initialData);
+      }
+    }, 100);
+
+    // 更新性能UI
+    function updatePerformanceUI(data) {
+      // 更新FPS值
+      document.getElementById('current-fps').textContent = data.fps.toFixed(2);
+      document.getElementById('avg-fps').textContent = data.avgFps.toFixed(2);
+      document.getElementById('min-fps').textContent = data.minFps.toFixed(2);
+      
+      // 更新FPS值的颜色
+      updateValueColor('current-fps', data.fps);
+      updateValueColor('avg-fps', data.avgFps);
+      updateValueColor('min-fps', data.minFps);
+      
+      // 更新长帧统计
+      document.getElementById('long-frames').textContent = data.longFrameCount;
+      document.getElementById('severe-frames').textContent = data.severeFrameCount;
+      document.getElementById('total-frames').textContent = data.totalFrames;
+      
+      // 更新流畅度评分
+      const score = data.smoothScore;
+      document.getElementById('smooth-score').textContent = Math.round(score);
+      
+      // 更新圆环进度
+      const circle = document.getElementById('score-circle');
+      const circumference = 220;
+      const offset = circumference - (score / 100) * circumference;
+      circle.style.strokeDashoffset = offset;
+      
+      // 根据评分改变颜色
+      let color = '#4ade80'; // 绿色
+      if (score < 60) {
+        color = '#f87171'; // 红色
+      } else if (score < 80) {
+        color = '#fbbf24'; // 黄色
+      }
+      circle.style.stroke = color;
+      
+      // 更新FPS图表
+      updateFPSChart(data.fps);
+    }
+
+    // 根据FPS值更新颜色
+    function updateValueColor(elementId, value) {
+      const element = document.getElementById(elementId);
+      element.classList.remove('good', 'warning', 'bad');
+      
+      if (value >= 50) {
+        element.classList.add('good');
+      } else if (value >= 30) {
+        element.classList.add('warning');
+      } else {
+        element.classList.add('bad');
+      }
+    }
+
+    // 更新FPS图表
+    function updateFPSChart(fps) {
+      fpsHistory.push(fps);
+      if (fpsHistory.length > MAX_FPS_HISTORY) {
+        fpsHistory.shift();
+      }
+      
+      const chart = document.getElementById('fps-chart');
+      chart.innerHTML = '';
+      
+      const width = chart.offsetWidth;
+      const barWidth = Math.max(2, width / MAX_FPS_HISTORY - 1);
+      
+      fpsHistory.forEach((value, index) => {
+        const bar = document.createElement('div');
+        bar.className = 'fps-bar';
+        const height = (value / 60) * 80; // 假设60fps为最高
+        bar.style.height = Math.min(height, 80) + 'px';
+        bar.style.left = (index * (barWidth + 1)) + 'px';
+        bar.style.width = barWidth + 'px';
+        
+        // 根据FPS值改变颜色
+        if (value < 30) {
+          bar.style.background = 'linear-gradient(to top, #f87171, #ef4444)';
+        } else if (value < 50) {
+          bar.style.background = 'linear-gradient(to top, #fbbf24, #f59e0b)';
+        } else {
+          bar.style.background = 'linear-gradient(to top, #4ade80, #22c55e)';
+        }
+        
+        chart.appendChild(bar);
+      });
+    }
+
+    // 生成初始卡片
+    function generateCards(count = 20) {
+      const container = document.getElementById('card-container');
+      const emojis = ['🎨', '🎭', '🎪', '🎬', '🎸', '🎮', '🎯', '🎲', '🎰', '🎳', '🎹', '🎺', '🎻', '🎼'];
+      
+      for (let i = 0; i < count; i++) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-image">${emojis[i % emojis.length]}</div>
+          <h3>卡片 #${i + 1}</h3>
+          <p>这是一个演示卡片，用于测试滚动性能。滚动页面时，SDK会实时监控帧率变化，检测长帧和卡顿情况。</p>
+        `;
+        container.appendChild(card);
+      }
+    }
+
+    // 添加重量级元素（会造成卡顿）
+    function addHeavyElements() {
+      const container = document.getElementById('heavy-container');
+      const heavyDiv = document.createElement('div');
+      heavyDiv.className = 'heavy-element';
+      heavyDiv.innerHTML = `
+        <h2>⚠️ 重量级元素</h2>
+        <p>这个元素包含大量粒子动画，会导致性能下降</p>
+        <div class="particle-container" id="particles-${Date.now()}"></div>
+      `;
+      container.appendChild(heavyDiv);
+      
+      // 添加粒子
+      const particleContainer = heavyDiv.querySelector('.particle-container');
+      for (let i = 0; i < 200; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 3 + 's';
+        particle.style.animationDuration = (2 + Math.random() * 3) + 's';
+        particleContainer.appendChild(particle);
+      }
+      
+      console.log('添加了重量级元素，观察FPS变化');
+    }
+
+    // 制造卡顿
+    function createJank() {
+      console.log('开始制造卡顿...');
+      const startTime = performance.now();
+      
+      // 执行耗时操作
+      while (performance.now() - startTime < 150) {
+        // 故意阻塞主线程
+        const div = document.createElement('div');
+        div.innerHTML = 'jank'.repeat(1000);
+      }
+      
+      console.log('卡顿制造完成！观察性能面板中的长帧统计');
+    }
+
+    // 自动滚动
+    function scrollToBottom() {
+      const duration = 3000;
+      const start = window.scrollY;
+      const end = document.body.scrollHeight - window.innerHeight;
+      const distance = end - start;
+      const startTime = performance.now();
+      
+      function scroll() {
+        const elapsed = performance.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // 使用缓动函数
+        const easeProgress = progress < 0.5
+          ? 2 * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        
+        window.scrollTo(0, start + distance * easeProgress);
+        
+        if (progress < 1) {
+          requestAnimationFrame(scroll);
+        }
+      }
+      
+      requestAnimationFrame(scroll);
+      console.log('自动滚动开始，观察滚动期间的性能表现');
+    }
+
+    // 重置演示
+    function resetDemo() {
+      document.getElementById('heavy-container').innerHTML = '';
+      document.getElementById('card-container').innerHTML = '';
+      generateCards(20);
+      window.scrollTo(0, 0);
+      console.log('演示已重置');
+    }
+
+    // 显示性能数据
+    function showPerformanceData() {
+      const perfData = monitor.getFramePerformanceData();
+      const frameHistory = monitor.getFrameHistory(10);
+      
+      console.group('📊 详细性能数据');
+      console.log('性能数据:', perfData);
+      console.log('最近10帧历史:', frameHistory);
+      console.groupEnd();
+      
+      alert(`
+性能数据报告
+━━━━━━━━━━━━━━━━━━
+当前FPS: ${perfData.fps.toFixed(2)}
+平均FPS: ${perfData.avgFps.toFixed(2)}
+最小FPS: ${perfData.minFps.toFixed(2)}
+最大FPS: ${perfData.maxFps.toFixed(2)}
+
+长帧数: ${perfData.longFrameCount}
+严重卡顿: ${perfData.severeFrameCount}
+总帧数: ${perfData.totalFrames}
+
+流畅度评分: ${perfData.smoothScore}/100
+监控时长: ${(perfData.duration / 1000).toFixed(2)}秒
+
+详细数据请查看控制台输出
+      `);
+    }
+
+    // 初始化页面
+    generateCards(20);
+    
+    // 页面加载完成后的提示
+    console.log('%c Frame性能监控已启动! ', 'background: #667eea; color: white; padding: 10px; font-size: 16px; font-weight: bold;');
+    console.log('功能说明:');
+    console.log('1. 滚动页面观察FPS变化');
+    console.log('2. 点击"添加重量级元素"增加渲染负担');
+    console.log('3. 点击"制造卡顿"模拟性能问题');
+    console.log('4. 点击"自动滚动"测试滚动性能');
+    console.log('5. 查看右侧面板的实时性能数据');
+
+    // 模拟高负载并自动开始测试
+    function simulatePreOptimization() {
+      console.log('%c 🚀 开始模拟优化前的高负载场景... ', 'background: #f87171; color: white; padding: 4px; border-radius: 4px; font-weight: bold;');
+      
+      console.log('正在添加20个重量级元素...');
+      for (let i = 0; i < 20; i++) {
+        addHeavyElements();
+      }
+      console.log('✅ 20个重量级元素添加完毕。');
+      
+      // 使用setTimeout确保浏览器有时间在制造卡顿前完成渲染更新
+      setTimeout(() => {
+        console.log('⚠️ 现在，将制造一次300ms的主线程阻塞来模拟卡顿...');
+        createJank();
+        console.log('✅ 卡顿制造完毕。');
+
+        console.log('500ms后将开始自动滚动...');
+        // 在卡顿后稍作等待，然后开始滚动
+        setTimeout(() => {
+          console.log('🚀 开始自动滚动...');
+          scrollToBottom();
+
+          // 滚动结束后（滚动动画时长为3000ms），输出最终性能报告
+          setTimeout(() => {
+            const finalPerfData = monitor.getFramePerformanceData();
+            
+            console.group('%c 📊 优化前性能总结报告 ', 'background: #667eea; color: white; padding: 4px; border-radius: 4px; font-weight: bold;');
+            
+            console.log('最终性能快照:', finalPerfData);
+            
+            console.log(`
+            ┌──────────────────────────────┐
+            │      Performance Summary     │
+            ├──────────────────────────────┤
+            │ 流畅度评分: ${Math.round(finalPerfData.smoothScore)} / 100          │
+            │ 平均 FPS: ${finalPerfData.avgFps.toFixed(2)}                 │
+            │ 最低 FPS: ${finalPerfData.minFps.toFixed(2)}                 │
+            │ 长帧数 (>50ms): ${finalPerfData.longFrameCount}              │
+            │ 严重卡顿 (>100ms): ${finalPerfData.severeFrameCount}        │
+            │ 监控总时长: ${(finalPerfData.duration / 1000).toFixed(2)}s            │
+            └──────────────────────────────┘
+            `);
+
+            console.groupEnd();
+            
+            alert('高负载模拟测试完成！请在浏览器控制台中查看详细的性能总结报告。');
+          }, 3500); // 预留500ms的缓冲时间
+        }, 500);
+      }, 100);
+    }
+
+    // 页面加载完成后自动执行模拟
+    simulatePreOptimization();
+
+    // 滚动时隐藏提示
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+      document.querySelector('.scroll-hint').style.opacity = '0';
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        if (window.scrollY < 100) {
+          document.querySelector('.scroll-hint').style.opacity = '1';
+        }
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
+

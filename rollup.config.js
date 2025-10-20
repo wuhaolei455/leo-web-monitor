@@ -61,12 +61,13 @@ module.exports = [
   
   // UMD build for browsers
   {
-    input: 'src/index.ts',
+    input: 'src/umd-index.ts',
     output: {
       file: 'dist/index.umd.js',
       format: 'umd',
       name: 'LeoWebMonitor',
-      sourcemap: true
+      sourcemap: true,
+      exports: 'default'
     },
     plugins: [
       resolve(),

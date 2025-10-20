@@ -187,8 +187,8 @@ function main() {
     dryRun();
     
     // 最终确认
-    log('\n⚠️  准备发布到NPM，这个操作不可逆！', 'yellow');
-    log('按 Ctrl+C 取消，或按 Enter 继续...', 'yellow');
+    // log('\n⚠️  准备发布到NPM，这个操作不可逆！', 'yellow');
+    // log('按 Ctrl+C 取消，或按 Enter 继续...', 'yellow');
     
     // 在生产环境中，这里应该等待用户输入
     // process.stdin.setRawMode(true);

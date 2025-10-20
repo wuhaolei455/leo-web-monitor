@@ -206,6 +206,10 @@ export interface ScrollPerformanceData {
   minFps: number;
   /** 滚动期间的长帧数 */
   longFrameCount: number;
+  /** 滚动期间的掉帧数 (超过16.7ms) */
+  droppedFrameCount: number;
+  /** 掉帧率 */
+  droppedFrameRate: number;
   /** 滚动流畅度评分 (0-100) */
   smoothScore: number;
   /** 页面URL */

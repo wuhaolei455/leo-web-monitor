@@ -389,7 +389,7 @@ export class FrameMonitor {
       this.scrollFrameData
     );
 
-    this.logger.info('Scroll performance', scrollData);
+    this.logger.info(`Scroll performance, Dropped frame rate: ${(scrollData.droppedFrameRate * 100).toFixed(2)}%`, scrollData);
   }
 
   /**
@@ -403,6 +403,7 @@ export class FrameMonitor {
     frames: FrameInfo[]
   ): ScrollPerformanceData {
     const scrollDistance = Math.abs(endY - startY);
+    const DROPPED_FRAME_THRESHOLD = 1000 / 60; // 60fps, ~16.7ms
 
     if (frames.length === 0) {
       return {
@@ -412,7 +413,9 @@ export class FrameMonitor {
         avgFps: 0,
         minFps: 0,
         longFrameCount: 0,
-        smoothScore: 0,
+        droppedFrameCount: 0,
+        droppedFrameRate: 0,
+        smoothScore: 100,
         url: typeof window !== 'undefined' ? window.location.href : ''
       };
     }
@@ -422,10 +425,13 @@ export class FrameMonitor {
     const avgFps = 1000 / avgFrameDuration;
     const minFps = 1000 / Math.max(...frames.map(f => f.duration));
     const longFrameCount = frames.filter(f => f.isLongFrame).length;
-    const longFrameRatio = longFrameCount / frames.length;
+    
+    // 计算掉帧
+    const droppedFrameCount = frames.filter(f => f.duration > DROPPED_FRAME_THRESHOLD).length;
+    const droppedFrameRate = droppedFrameCount / frames.length;
 
-    // 滚动流畅度评分
-    const smoothScore = Math.max(0, Math.round(100 - longFrameRatio * 100));
+    // 滚动流畅度评分, 基于掉帧率
+    const smoothScore = Math.max(0, Math.round(100 * (1 - droppedFrameRate)));
 
     return {
       startTime,
@@ -434,6 +440,8 @@ export class FrameMonitor {
       avgFps,
       minFps,
       longFrameCount,
+      droppedFrameCount,
+      droppedFrameRate,
       smoothScore,
       url: typeof window !== 'undefined' ? window.location.href : ''
     };

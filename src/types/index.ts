@@ -196,12 +196,12 @@ export interface FrameInfo {
  * 滚动性能数据接口
  */
 export interface ScrollPerformanceData {
-  /** 滚动开始时间 */
-  startTime: number;
-  /** 滚动结束时间 */
-  endTime: number;
+  /** 滚动时长(ms) */
+  duration: number;
   /** 滚动距离 */
   scrollDistance: number;
+  /** 滚动期间的总帧数 */
+  totalFrames: number;
   /** 滚动期间的平均FPS */
   avgFps: number;
   /** 滚动期间的最小FPS */

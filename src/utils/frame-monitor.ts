@@ -411,14 +411,15 @@ export class FrameMonitor {
     endY: number,
     frames: FrameInfo[]
   ): ScrollPerformanceData {
+    const duration = endTime - startTime;
     const scrollDistance = Math.abs(endY - startY);
     const DROPPED_FRAME_THRESHOLD = 1000 / 60; // 60fps, ~16.7ms
 
     if (frames.length === 0) {
       return {
-        startTime,
-        endTime,
+        duration,
         scrollDistance,
+        totalFrames: 0,
         avgFps: 0,
         minFps: 0,
         longFrameCount: 0,
@@ -443,9 +444,9 @@ export class FrameMonitor {
     const smoothScore = Math.max(0, Math.round(100 * (1 - droppedFrameRate)));
 
     return {
-      startTime,
-      endTime,
+      duration,
       scrollDistance,
+      totalFrames: frames.length,
       avgFps,
       minFps,
       longFrameCount,

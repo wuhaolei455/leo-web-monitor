@@ -17,6 +17,7 @@ export class FrameMonitor {
   private frameHistory: FrameInfo[] = [];
   private longFrameCount = 0;
   private severeFrameCount = 0;
+  private droppedFrameCount = 0;
   private startTime = 0;
   private updateIntervalId: number | null = null;
   private lastUpdateTime = 0;
@@ -74,7 +75,7 @@ export class FrameMonitor {
     this.resetMetrics();
 
     // 开始监控帧率
-    this.monitorFrame();
+    this.rafId = requestAnimationFrame(this.monitorFrame);
 
     // 设置定期更新
     this.updateIntervalId = window.setInterval(() => {
@@ -151,6 +152,7 @@ export class FrameMonitor {
     const minFps = this.fpsHistory.length > 0 ? Math.min(...this.fpsHistory) : 0;
     const maxFps = this.fpsHistory.length > 0 ? Math.max(...this.fpsHistory) : 0;
     const smoothScore = this.calculateSmoothScore();
+    const droppedFrameRate = this.frameCount > 0 ? this.droppedFrameCount / this.frameCount : 0;
 
     return {
       fps: currentFps,
@@ -161,6 +163,7 @@ export class FrameMonitor {
       severeFrameCount: this.severeFrameCount,
       totalFrames: this.frameCount,
       smoothScore,
+      droppedFrameRate,
       duration,
       timestamp: Date.now(),
       url: typeof window !== 'undefined' ? window.location.href : ''
@@ -184,6 +187,7 @@ export class FrameMonitor {
     this.frameHistory = [];
     this.longFrameCount = 0;
     this.severeFrameCount = 0;
+    this.droppedFrameCount = 0;
   }
 
   /**
@@ -196,10 +200,12 @@ export class FrameMonitor {
 
     const now = performance.now();
     const frameDuration = now - this.lastFrameTime;
+    const DROPPED_FRAME_THRESHOLD = 1000 / 60; // 60fps, ~16.7ms
     
     // 记录帧信息
     const isLongFrame = frameDuration > this.config.longFrameThreshold;
     const isSevereFrame = frameDuration > this.config.severeFrameThreshold;
+    const isDroppedFrame = frameDuration > DROPPED_FRAME_THRESHOLD;
     
     const frameInfo: FrameInfo = {
       frameId: this.frameCount,
@@ -222,6 +228,9 @@ export class FrameMonitor {
     }
     if (isSevereFrame) {
       this.severeFrameCount++;
+    }
+    if (isDroppedFrame) {
+      this.droppedFrameCount++;
     }
 
     // 如果正在滚动，记录滚动期间的帧信息

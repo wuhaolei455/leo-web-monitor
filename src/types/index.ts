@@ -164,6 +164,8 @@ export interface FramePerformanceData {
   totalFrames: number;
   /** 流畅度评分 (0-100) */
   smoothScore: number;
+  /** 掉帧率 */
+  droppedFrameRate: number;
   /** 监控时长(ms) */
   duration: number;
   /** 时间戳 */

@@ -150,31 +150,26 @@ export interface ReportResponse {
  * Frame性能数据接口
  */
 export interface FramePerformanceData {
-  /** 当前FPS */
+  // FPS
   fps: number;
-  /** 平均FPS */
   avgFps: number;
-  /** 最小FPS */
   minFps: number;
-  /** 最大FPS */
   maxFps: number;
-  /** 长帧数量 */
-  longFrameCount: number;
-  /** 严重卡顿帧数量 */
-  severeFrameCount: number;
-  /** 总帧数 */
+
+  // 帧数
   totalFrames: number;
-  /** 流畅度评分 (0-100) */
-  smoothScore: number;
-  /** 掉帧率 */
+  longFrameCount: number;
+  severeFrameCount: number;
+  droppedFrameCount: number;
+
+  // 评分
   droppedFrameRate: number;
-  /** 监控时长(ms) */
+  smoothScore: number;
+
+  // 元数据
   duration: number;
-  /** 时间戳 */
   timestamp: number;
-  /** 页面URL */
   url: string;
-  /** 额外信息 */
   extra?: Record<string, unknown>;
 }
 
@@ -198,24 +193,21 @@ export interface FrameInfo {
  * 滚动性能数据接口
  */
 export interface ScrollPerformanceData {
-  /** 滚动时长(ms) */
+  // 元数据
   duration: number;
-  /** 滚动距离 */
   scrollDistance: number;
-  /** 滚动期间的总帧数 */
-  totalFrames: number;
-  /** 滚动期间的平均FPS */
-  avgFps: number;
-  /** 滚动期间的最小FPS */
-  minFps: number;
-  /** 滚动期间的长帧数 */
-  longFrameCount: number;
-  /** 滚动期间的掉帧数 (超过16.7ms) */
-  droppedFrameCount: number;
-  /** 掉帧率 */
-  droppedFrameRate: number;
-  /** 滚动流畅度评分 (0-100) */
-  smoothScore: number;
-  /** 页面URL */
   url: string;
+
+  // 帧
+  totalFrames: number;
+  longFrameCount: number;
+  droppedFrameCount: number;
+
+  // FPS
+  avgFps: number;
+  minFps: number;
+
+  // 评分
+  droppedFrameRate: number;
+  smoothScore: number;
 }

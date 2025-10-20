@@ -158,15 +158,23 @@ export class FrameMonitor {
     const droppedFrameRate = this.frameCount > 0 ? this.droppedFrameCount / this.frameCount : 0;
 
     return {
+      // FPS
       fps: currentFps,
       avgFps,
       minFps,
       maxFps,
+
+      // 帧
+      totalFrames: this.frameCount,
       longFrameCount: this.longFrameCount,
       severeFrameCount: this.severeFrameCount,
-      totalFrames: this.frameCount,
-      smoothScore,
+      droppedFrameCount: this.droppedFrameCount,
+
+      // 评分
       droppedFrameRate,
+      smoothScore,
+
+      // 元数据
       duration,
       timestamp: Date.now(),
       url: typeof window !== 'undefined' ? window.location.href : ''
@@ -424,16 +432,20 @@ export class FrameMonitor {
 
     if (frames.length === 0) {
       return {
+        // 元数据
         duration,
         scrollDistance,
+        url: typeof window !== 'undefined' ? window.location.href : '',
+        // 帧
         totalFrames: 0,
-        avgFps: 0,
-        minFps: 0,
         longFrameCount: 0,
         droppedFrameCount: 0,
+        // FPS
+        avgFps: 0,
+        minFps: 0,
+        // 评分
         droppedFrameRate: 0,
         smoothScore: 100,
-        url: typeof window !== 'undefined' ? window.location.href : ''
       };
     }
 
@@ -451,16 +463,23 @@ export class FrameMonitor {
     const smoothScore = Math.max(0, Math.round(100 * (1 - droppedFrameRate)));
 
     return {
+       // 元数据
       duration,
       scrollDistance,
+      url: typeof window !== 'undefined' ? window.location.href : '',
+      
+      // 帧
       totalFrames: frames.length,
-      avgFps,
-      minFps,
       longFrameCount,
       droppedFrameCount,
+
+      // FPS
+      avgFps,
+      minFps,
+
+      // 评分
       droppedFrameRate,
       smoothScore,
-      url: typeof window !== 'undefined' ? window.location.href : ''
     };
   }
 

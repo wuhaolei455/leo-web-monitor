@@ -282,8 +282,6 @@ export class FrameMonitor {
     if (this.fpsHistory.length > 60) {
       this.fpsHistory.shift();
     }
-
-    this.logger.debug(`Current FPS: ${currentFps.toFixed(2)}`);
     
     // 触发性能数据回调
     if (this.config.onPerformanceData) {
